@@ -8,25 +8,25 @@ import {
   Delete,
   ParseUUIDPipe,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { GuildsService } from './guilds.service';
 import { CreateGuildDto } from './dto/create-guild.dto';
 import { UpdateGuildDto } from './dto/update-guild.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-// Temporary: will be replaced with real JWT user in auth branch
 interface RequestWithUser {
-  user?: { id: string };
+  user: { id: string; username: string; email: string };
 }
 
+@UseGuards(JwtAuthGuard)
 @Controller('guilds')
 export class GuildsController {
   constructor(private readonly guildsService: GuildsService) {}
 
   @Post()
   create(@Body() dto: CreateGuildDto, @Request() req: RequestWithUser) {
-    // Placeholder ownerId until JWT is wired
-    const ownerId = req.user?.id ?? 'placeholder-owner-id';
-    return this.guildsService.create(dto, ownerId);
+    return this.guildsService.create(dto, req.user.id);
   }
 
   @Get()
@@ -45,14 +45,12 @@ export class GuildsController {
     @Body() dto: UpdateGuildDto,
     @Request() req: RequestWithUser,
   ) {
-    const requesterId = req.user?.id ?? 'placeholder-owner-id';
-    return this.guildsService.update(id, dto, requesterId);
+    return this.guildsService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: RequestWithUser) {
-    const requesterId = req.user?.id ?? 'placeholder-owner-id';
-    return this.guildsService.remove(id, requesterId);
+    return this.guildsService.remove(id, req.user.id);
   }
 
   @Post(':id/members/:userId')
